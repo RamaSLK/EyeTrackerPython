@@ -2,168 +2,144 @@ import numpy as np
 import cv2
 
 face_cascade = cv2.CascadeClassifier('/Users/dhanukaramanayake/.virtualenvs/EyeTrackerPy/lib/python3.7/site-packages/cv2/data/haarcascade_frontalface_alt2.xml')
-eye_cascade = cv2.CascadeClassifier('/Users/dhanukaramanayake/.virtualenvs/EyeTrackerPy/lib/python3.7/site-packages/cv2/data/haarcascade_eye.xml')
-glass_cascade = cv2.CascadeClassifier('/Users/dhanukaramanayake/.virtualenvs/EyeTrackerPy/lib/python3.7/site-packages/cv2/data/haarcascade_eye_tree_eyeglasses.xml')
-right_eye_cascade = cv2.CascadeClassifier('/Users/dhanukaramanayake/.virtualenvs/EyeTrackerPy/lib/python3.7/site-packages/cv2/data/haarcascade_righteye_2splits.xml')
-left_eye_cascade = cv2.CascadeClassifier('/Users/dhanukaramanayake/.virtualenvs/EyeTrackerPy/lib/python3.7/site-packages/cv2/data/haarcascade_lefteye_2splits.xml')
-
-cap = cv2.VideoCapture(0)
-
-while 1:
-    ret, img = cap.read()
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    cv2.equalizeHist(gray, gray)
-    cv2.GaussianBlur(gray, (9, 9), 4, gray, 4)
-
-    faces = face_cascade.detectMultiScale(gray, 1.3, 6)
+camera = cv2.VideoCapture(0)
+numerator_l = 0
+denominator_l = 0
+numerator_r = 0
+denominator_r = 0
+while True:
+    ret, frame = camera.read()
+    roi = frame
+    roi2 = frame
+    frame = cv2.flip(frame, 1)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     for (x, y, w, h) in faces:
-        cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        roi_gray = gray[y:y + h, x:x + w]
-        roi_color = img[y:y + h, x:x + w]
-    #
-    #     glasses = glass_cascade.detectMultiScale(roi_gray)
-    #     for (gx, gy, gw, gh) in glasses:
-    #         cv2.rectangle(roi_color,(gx, gy),(gx + gw, gy + gh), (0, 0, 255), 2)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-            # eyes = eye_cascade.detectMultiScale(roi_gray)
-            # for (ex, ey, ew, eh) in eyes:
-            #     cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
+        # left eye
+        # horizontal lower line
+        cv2.line(frame, (int(x + w / 4.2), int(y + h / 2.1)), (int(x + w / 2.5), int(y + h / 2.1)), (0, 255, 0), 2)
+        # horizontal upper line
+        cv2.line(frame, (int(x + w / 4.2), int(y + h / 3.5)), (int(x + w / 2.5), int(y + h / 3.5)), (0, 255, 0), 2)
+        # vertical left line
+        cv2.line(frame, (int(x + w / 4.2), int(y + h / 3.5)), (int(x + w / 4.2), int(y + h / 2.1)), (0, 255, 0), 2)
+        # vertical right line
+        cv2.line(frame, (int(x + w / 2.5), int(y + h / 3.5)), (int(x + w / 2.5), int(y + h / 2.1)), (0, 255, 0), 2)
 
-        glasses = glass_cascade.detectMultiScale(roi_gray, 1.3, 6)
-        for (rx, ry, rw, rh) in glasses:
-            cv2.rectangle(roi_color, (rx, ry), (rx + rw, ry + rh), (0, 255, 0), 2)
-            roi_gray2 = roi_gray[ry:ry + rh, rx:rx + rw]
-            roi_color2 = img[ry:ry + rh, rx:rx + rw]
-            circles = cv2.HoughCircles(roi_gray2, cv2.HOUGH_GRADIENT, 1, 200, param1=100, param2=10, minRadius=0, maxRadius=0)
+        # right eye
+        # horizontal lower line
+        cv2.line(frame, (int(x + w / 1.6), int(y + h / 2.1)), (int(x + w / 1.3), int(y + h / 2.1)), (0, 255, 0), 2)
+        # horizontal upper line
+        cv2.line(frame, (int(x + w / 1.6), int(y + h / 3.5)), (int(x + w / 1.3), int(y + h / 3.5)), (0, 255, 0), 2)
+        # vertical left line
+        cv2.line(frame, (int(x + w / 1.6), int(y + h / 3.5)), (int(x + w / 1.6), int(y + h / 2.1)), (0, 255, 0), 2)
+        # vertical right line
+        cv2.line(frame, (int(x + w / 1.3), int(y + h / 3.5)), (int(x + w / 1.3), int(y + h / 2.1)), (0, 255, 0), 2)
 
-            try:
-                for i in circles[0, :]:
-                    # draw the outer circle
-                    cv2.circle(roi_color2, (i[0], i[1]), i[2], (255, 255, 255), 2)
-                    print("drawing circle", circles)
-                    # draw the center of the circle
-                    cv2.circle(roi_color2, (i[0], i[1]), 2, (255, 255, 255), 3)
+        # coordinates of interest
+        # left eye roi
+        x1 = int(x + w / 4.2) + 1
+        x2 = int(x + w / 2.5)
+        y1 = int(y + h / 3.5) + 1
+        y2 = int(y + h / 2.1)
 
-            except Exception as e:
-                print("Exception : ", e)
+        # right eye roi
+        x3 = int(x + w / 1.6) + 1
+        x4 = int(x + w / 1.3)
+        y3 = int(y + h / 3.5) + 1
+        y4 = int(y + h / 2.1)
 
-    cv2.flip(img, 1, img)
-    cv2.imshow('video feed', img)
-    # cv2.flip(roi_color2, 1, roi_color2)
-    # cv2.imshow('roi_color2', roi_color2)
-    k = cv2.waitKey(30)
-    if k == 27:  # press Esc key to kill the program
+        # for left eye
+        roi = frame[y1:y2, x1:x2]
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        equ = cv2.equalizeHist(gray)
+        thres = cv2.inRange(equ, 0, 30)
+        kernel = np.ones((3, 3), np.uint8)
+        # removing small noise inside the white image
+        dilation = cv2.dilate(thres, kernel, iterations=2)
+        # decreasing the size of the white region
+        erosion = cv2.erode(dilation, kernel, iterations=3)
+        # finding the contours
+        image, contours, hierarchy = cv2.findContours(erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        # checking for 2 contours found or not
+        if len(contours) == 2:
+            numerator_l += 1
+            # img = cv2.drawContours(roi, contours, 1, (0,255,0), 3)
+            # finding the centroid of the contour
+            M = cv2.moments(contours[1])
+            print(M['m00'])
+            print(M['m10'])
+            print(M['m01'])
+            if M['m00'] != 0:
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                cv2.line(roi, (cx, cy), (cx, cy), (0, 0, 255), 3)
+        # print cx,cy
+        # checking for one contours presence
+        elif len(contours) == 1:
+            numerator_l += 1
+            # img = cv2.drawContours(roi, contours, 0, (0,255,0), 3)
+
+            # finding centroid of the contours
+            M = cv2.moments(contours[0])
+            if M['m00'] != 0:
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                # print cx,cy
+                cv2.line(roi, (cx, cy), (cx, cy), (0, 0, 255), 3)
+        else:
+            denominator_l += 1
+        # print "iris not detected"
+
+        # for right eye
+        roi2 = frame[y3:y4, x3:x4]
+        gray2 = cv2.cvtColor(roi2, cv2.COLOR_BGR2GRAY)
+        equ2 = cv2.equalizeHist(gray2)
+        thres2 = cv2.inRange(equ2, 0, 20)
+        kernel2 = np.ones((3, 3), np.uint8)
+        # removing small noise inside the white image
+        dilation2 = cv2.dilate(thres2, kernel2, iterations=2)
+        # decreasing the size of the white region
+        erosion2 = cv2.erode(dilation2, kernel2, iterations=3)
+        # finding the contours
+        image2, contours2, hierarchy2 = cv2.findContours(erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        # checking for 2 contours found or not
+        if len(contours2) == 2:
+            numerator_r += 1
+            # img = cv2.drawContours(roi, contours, 1, (0,255,0), 3)
+            # finding the centroid of the contour
+            M = cv2.moments(contours2[1])
+            print(M['m00'])
+            print(M['m10'])
+            print(M['m01'])
+            if M['m00'] != 0:
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                cv2.line(roi2, (cx, cy), (cx, cy), (0, 0, 255), 3)
+        # print cx,cy
+        # checking for one contours presence
+        elif len(contours2) == 1:
+            numerator_r += 1
+            # img = cv2.drawContours(roi, contours, 0, (0,255,0), 3)
+
+            # finding centroid of the contours
+            M = cv2.moments(contours2[0])
+            if M['m00'] != 0:
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                # print cx,cy
+                cv2.line(roi2, (cx, cy), (cx, cy), (0, 0, 255), 3)
+        else:
+            denominator_r += 1
+        # print "iris not detected"
+
+    cv2.imshow("frame", frame)
+    # cv2.imshow("Left eye", roi)
+    # cv2.imshow("Right eye", roi2)
+    if cv2.waitKey(30) == 27 & 0xff:
         break
-
-cap.release()
+camera.release()
+print("accurracy=", (float(numerator_l) / float(numerator_l + denominator_l)) * 100)
+print("accurracy=", (float(numerator_r) / float(numerator_r + denominator_r)) * 100)
 cv2.destroyAllWindows()
-
-# import numpy as np
-# import cv2
-# import time
-#
-# cap = cv2.VideoCapture(0)  # 640,480
-# # w = 640
-# # h = 480
-#
-# while (cap.isOpened()):
-#     ret, frame = cap.read()
-#     if ret == True:
-#
-#         # downsample
-#         # frameD = cv2.pyrDown(cv2.pyrDown(frame))
-#         # frameDBW = cv2.cvtColor(frameD,cv2.COLOR_RGB2GRAY)
-#
-#         # detect face
-#         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-#         faces = cv2.CascadeClassifier('/Users/dhanukaramanayake/.virtualenvs/EyeTrackerPy/lib/python3.7/site-packages/cv2/data/haarcascade_eye_tree_eyeglasses.xml')
-#         detected = faces.detectMultiScale(frame, 1.3, 5)
-#
-#         # faces = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-#         # detected2 = faces.detectMultiScale(frameDBW, 1.3, 5)
-#
-#         pupilFrame = frame
-#         pupilO = frame
-#         windowClose = np.ones((5, 5), np.uint8)
-#         windowOpen = np.ones((2, 2), np.uint8)
-#         windowErode = np.ones((2, 2), np.uint8)
-#
-#         # draw square
-#         for (x, y, w, h) in detected:
-#             cv2.rectangle(frame, (x, y), ((x + w), (y + h)), (0, 0, 255), 1)
-#             cv2.line(frame, (x, y), (x + w, y + h), (0, 0, 255), 1)
-#             cv2.line(frame, (x + w, y), (x, y + h), (0, 0, 255), 1)
-#             pupilFrame = cv2.equalizeHist(frame[int(y + (h * .25)):(y + h), x:(x + w)])
-#             pupilO = pupilFrame
-#             ret, pupilFrame = cv2.threshold(pupilFrame, 55, 255, cv2.THRESH_BINARY)  # 50 ..nothin 70 is better
-#             pupilFrame = cv2.morphologyEx(pupilFrame, cv2.MORPH_CLOSE, windowClose)
-#             pupilFrame = cv2.morphologyEx(pupilFrame, cv2.MORPH_ERODE, windowErode)
-#             pupilFrame = cv2.morphologyEx(pupilFrame, cv2.MORPH_OPEN, windowOpen)
-#
-#             # so above we do image processing to get the pupil..
-#             # now we find the biggest blob and get the centriod
-#
-#             threshold = cv2.inRange(pupilFrame, 250, 255)  # get the blobs
-#             buff, contours, hierarchy = cv2.findContours(threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-#
-#             # if there are 3 or more blobs, delete the biggest and delete the left most for the right eye
-#             # if there are 2 blob, take the second largest
-#             # if there are 1 or less blobs, do nothing
-#
-#             if len(contours) >= 2:
-#                 # find biggest blob
-#                 maxArea = 0
-#                 MAindex = 0  # to get the unwanted frame
-#                 distanceX = []  # delete the left most (for right eye)
-#                 currentIndex = 0
-#                 for cnt in contours:
-#                     area = cv2.contourArea(cnt)
-#                     center = cv2.moments(cnt)
-#                     if center['m00'] != 0:
-#                         cx = int(center["m10"] / center["m00"])
-#                         cy = int(center["m01"] / center["m00"])
-#                     else:
-#                         cx, cy = 0, 0
-#                     distanceX.append(cx)
-#                     if area > maxArea:
-#                         maxArea = area
-#                         MAindex = currentIndex
-#                     currentIndex = currentIndex + 1
-#
-#                 del contours[MAindex]  # remove the picture frame contour
-#                 del distanceX[MAindex]
-#
-#             eye = 'right'
-#
-#             if len(contours) >= 2:  # delete the left most blob for right eye
-#                 if eye == 'right':
-#                     edgeOfEye = distanceX.index(min(distanceX))
-#                 else:
-#                     edgeOfEye = distanceX.index(max(distanceX))
-#                 del contours[edgeOfEye]
-#                 del distanceX[edgeOfEye]
-#
-#             if len(contours) >= 1:  # get largest blob
-#                 maxArea = 0
-#                 for cnt in contours:
-#                     area = cv2.contourArea(cnt)
-#                     if area > maxArea:
-#                         maxArea = area
-#                         largeBlob = cnt
-#
-#             if len(largeBlob) > 0:
-#                 center = cv2.moments(largeBlob)
-#                 cx, cy = int(center['m10'] / center['m00']), int(center['m01'] / center['m00'])
-#                 cv2.circle(pupilO, (cx, cy), 5, 255, -1)
-#
-#     # show picture
-#     cv2.flip(pupilO, 1, pupilO)
-#     cv2.flip(pupilFrame, 1, pupilFrame)
-#     cv2.imshow('frame', pupilO)
-#     cv2.imshow('frame2', pupilFrame)
-#     k = cv2.waitKey(30)
-#     if k == 27:  # press Esc key to kill the program
-#         break
-#
-# cap.release()
-# cv2.destroyAllWindows()
